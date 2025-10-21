@@ -1,6 +1,12 @@
-import argparse
 import csv
 import numpy as np
+
+INPUT_PATH  = "datasets/data.csv"
+TRAIN_OUT   = "datasets/data_train.csv"
+VALID_OUT   = "datasets/data_valid.csv"
+VALID_RATIO = 0.2
+SEED        = 42
+N_COLS      = 32
 
 def read_csv_no_header(path):
     rows = []
@@ -18,33 +24,23 @@ def write_csv(path, rows):
         w.writerows(rows)
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--input", required=True, help="Path to data.csv (no header, 32 cols)")
-    ap.add_argument("--train_out", default="data_train.csv")
-    ap.add_argument("--valid_out", default="data_valid.csv")
-    ap.add_argument("--valid_ratio", type=float, default=0.2)
-    ap.add_argument("--seed", type=int, default=42)
-    args = ap.parse_args()
+    rows = read_csv_no_header(INPUT_PATH)
+    assert rows, "INPUT_PATH is empty or not found"
+    assert len(rows[0]) == N_COLS, f"Expected {N_COLS} columns, got {len(rows[0])}"
 
-    rows = read_csv_no_header(args.input)
-    assert len(rows) > 0, "empty input"
-    ncols = len(rows[0])
-    assert ncols == 32, f"Expected 32 columns, got {ncols}"
-
-    n = len(rows)
-    idx = np.arange(n)
-    rng = np.random.default_rng(args.seed)
+    n_rows = len(rows)
+    idx = np.arange(n_rows)
+    rng = np.random.default_rng(SEED)
+    print("rng: ", rng)
     rng.shuffle(idx)
 
-    split = int(n * (1 - args.valid_ratio))
+    split = int(n_rows * (1 - VALID_RATIO))
     train_idx, valid_idx = idx[:split], idx[split:]
+    write_csv(TRAIN_OUT, [rows[i] for i in train_idx])
+    write_csv(VALID_OUT, [rows[i] for i in valid_idx])
 
-    train_rows = [rows[i] for i in train_idx]
-    valid_rows = [rows[i] for i in valid_idx]
-
-    write_csv(args.train_out, train_rows)
-    write_csv(args.valid_out, valid_rows)
-    print(f"Saved {len(train_rows)} rows to {args.train_out} and {len(valid_rows)} rows to {args.valid_out}")
+    print(f"[split] train={len(train_idx)}, valid={len(valid_idx)}")
+    print(f"[split] saved -> {TRAIN_OUT}, {VALID_OUT}")
 
 if __name__ == "__main__":
     main()
