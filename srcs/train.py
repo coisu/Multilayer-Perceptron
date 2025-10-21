@@ -1,7 +1,7 @@
 import os, csv
 import numpy as np
 import matplotlib.pyplot as plt
-from mlp_numpy import MLP, one_hot, train
+from mlp_numpy import MLP, train
 from split import SEED, N_COLS
 
 TRAIN_SET   = "datasets/data_train.csv"
@@ -14,6 +14,12 @@ EPOCHS      = 30
 LR          = 0.05  # learning rate
 BATCH       = 64
 ACT         = "relu"
+
+def one_hot(y, n_classes):
+    y = np.asarray(y, dtype=int)
+    Y = np.zeros((len(y), n_classes), dtype=float)
+    Y[np.arange(len(y)), y] = 1.0
+    return Y
 
 def read_dataset(path):
     X_list, y_list = [], []
@@ -30,36 +36,39 @@ def read_dataset(path):
     y = np.array(y_list, dtype=np.int64)
     return X, y
 
-def zscore_fit(X):
-    mu = X.mean(axis=0, keepdims=True)
-    sigma = X.std(axis=0, keepdims=True) + 1e-8
-    return mu, sigma
+def standardize_fit(X):
+    mean = X.mean(axis=0, keepdims=True)
+    std = X.std(axis=0, keepdims=True) + 1e-8 # avoid sigma = 0
+    return mean, std
 
-def zscore_apply(X, mu, sigma):
-    return (X - mu) / sigma
+def standardize_features(X, mean, std):
+    return (X - mean) / std
 
 def main():
     # 1) load
     X_tr, y_tr = read_dataset(TRAIN_SET)
     X_va, y_va = read_dataset(VALID_SET)
+    print(f"\nX_tr shape: {X_tr.shape}")
+    print(f"X_va shape: {X_va.shape}\n")
 
     # 2) standardize by train stats
-    mu, sigma = zscore_fit(X_tr)
-    X_tr = zscore_apply(X_tr, mu, sigma)
-    X_va = zscore_apply(X_va, mu, sigma)
+    mean_train, std_train = standardize_fit(X_tr)
+    X_tr = standardize_features(X_tr, mean_train, std_train)
+    X_va = standardize_features(X_va, mean_train, std_train)
 
-    y_tr_oh = one_hot(y_tr, 2)
-    y_va_oh = one_hot(y_va, 2)
+    #   vectorized
+    y_tr_vec = one_hot(y_tr, 2)
+    y_va_vec = one_hot(y_va, 2)
 
     # 3) model
     input_size = X_tr.shape[1]
-    layer_sizes = [input_size] + LAYERS + [2]
+    layer_sizes = [input_size] + LAYERS + [2]   # [30(input), 32, 32, 2(output: [M, B])]
     activations = [ACT] * len(LAYERS) + ["softmax"]
-    mlp = MLP(layer_sizes, activations, seed=42)
+    mlp = MLP(layer_sizes, activations, SEED)   # LR * sum + bias
 
     # 4) train
     hist = train(
-        mlp, X_tr, y_tr_oh, X_va, y_va_oh,
+        mlp, X_tr, y_tr_vec, X_va, y_va_vec,
         epochs=EPOCHS, lr=LR, batch_size=BATCH, verbose=True
     )
 
@@ -68,8 +77,8 @@ def main():
     meta = {
         "layer_sizes": layer_sizes,
         "activations": activations,
-        "mu": mu.tolist(),
-        "sigma": sigma.tolist(),
+        "mean": mean_train.tolist(),
+        "standard_division": std_train.tolist(),
         "seed": SEED,
     }
     mlp.save(MODEL_OUT, meta)
