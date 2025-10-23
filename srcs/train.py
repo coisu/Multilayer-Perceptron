@@ -4,15 +4,20 @@ import matplotlib.pyplot as plt
 from split import SEED, N_COLS
 from mlp_manual import MLP, train_loop, save_npz
 
+RESET  = "\033[0m"
+GRAY   = "\033[90m"
+BLUE   = "\033[94m"
+
 TRAIN_SET   = "datasets/data_train.csv"
 VALID_SET   = "datasets/data_valid.csv"
-MODEL_OUT   = "models/saved_model.npz"
+MODELS_DIR  = "models/"
+# MODEL_OUT   = "models/saved_model.npz"
 OUTPUT_DIR  = "outputs"
 
-LAYERS      = [32, 32]
-EPOCHS      = 30
+LAYERS      = [64, 32]
+EPOCHS      = 60
 LR          = 0.05
-BATCH       = 64
+BATCH       = 32
 ACT         = "relu"
 
 PATIENCE        = 5         # for early stopping
@@ -20,6 +25,15 @@ LR_DECAY_AT     = 10        # at EPOCHS 10
 LR_DECAY_FACTOR = 0.5
 WEIGHT_DECAY    = 0.0       # L2
 MAX_GRAD_NORM   = 5.0
+
+def write_latest(models_dir: str, model_filename: str):
+    os.makedirs(MODELS_DIR, exist_ok=True)
+    latest = os.path.join(MODELS_DIR, "latest")
+    with open(latest, "w", encoding="utf-8") as f:
+        f.write(os.path.basename(model_filename).strip() + "\n")  # 파일명만 저장
+        f.flush()
+        os.fsync(f.fileno())
+    print(f"{BLUE}[train]{GRAY} saved latest model -> {MODELS_DIR}latest{RESET}")
 
 def one_hot(y, n_classes):
     Y = np.zeros((len(y), n_classes), dtype=np.float64)
@@ -91,7 +105,6 @@ def main():
     )
 
     # save
-    os.makedirs(os.path.dirname(MODEL_OUT), exist_ok=True)
     meta = {
         "layer_sizes": layer_sizes,
         "activations": activations,
@@ -100,8 +113,19 @@ def main():
         "seed": int(SEED),
         "best_epoch": int(best_epoch),
     }
-    save_npz(MODEL_OUT, mlp, meta)
-    print(f"[train] saved model -> {MODEL_OUT}")
+
+    arch_all = "-".join(str(s) for s in layer_sizes)
+
+    # output_size = 2
+    # arch_model = "-".join(str(s) for s in (LAYERS + [output_size]))  # e.g. "64-32-2"
+
+    best_val_loss = min(hist["val_loss"]) if isinstance(hist, dict) else min(h["val_loss"] for h in hist)
+    MODEL_OUT = f"model_e{best_epoch}-of-{EPOCHS}_vl{best_val_loss:.4f}_b{BATCH}_seed{SEED}_arch{arch_all}.npz"
+
+    os.makedirs(MODELS_DIR, exist_ok=True)
+    save_npz(os.path.join(MODELS_DIR, MODEL_OUT), mlp, meta)
+    print(f"{BLUE}[train] saved model -> {MODELS_DIR}{MODEL_OUT}{RESET}")
+    write_latest(MODELS_DIR, MODEL_OUT)
 
     # graph
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -131,7 +155,7 @@ def main():
 
     plt.savefig(os.path.join(OUTPUT_DIR, "accuracy.png"))
 
-    print(f"[train] plots -> {os.path.join(OUTPUT_DIR,'loss.png')}, {os.path.join(OUTPUT_DIR,'accuracy.png')}")
+    print(f"{BLUE}[train]{RESET} plots -> {os.path.join(OUTPUT_DIR,'loss.png')}, {os.path.join(OUTPUT_DIR,'accuracy.png')}")
 
 if __name__ == "__main__":
     main()

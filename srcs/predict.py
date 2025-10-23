@@ -1,11 +1,27 @@
 # load saved npz(weights + meta), excute forward and valify accurancy
-import csv
+import os, csv
 import numpy as np
 from split import N_COLS
 from mlp_manual import load_npz
 
-MODEL_PATH = "models/saved_model.npz"
+
+RESET  = "\033[0m"
+YELLOW = "\033[33m"
+
+# MODEL_PATH = "models/saved_model.npz"
+MODELS_DIR = "models/"
+LATEST_PATH = "models/latest"
 INPUT_CSV  = "datasets/data_valid.csv"
+
+
+def read_latest_model_path(latest_file="models/latest") -> str:
+    if not os.path.isfile(latest_file):
+        raise FileNotFoundError(f"missing latest.txt: {latest_file}")
+    with open(latest_file, "r", encoding="utf-8") as f:
+        name = f.readline().strip()
+    if not name:
+        raise ValueError(f"cannot get npz file name: {latest_file}")
+    return name
 
 
 def read_dataset(path):
@@ -30,7 +46,9 @@ def standardize_transform(X, mean, std):
 
 
 def main():
-    mlp, meta = load_npz(MODEL_PATH)
+    MODEL_PATH = read_latest_model_path(LATEST_PATH)
+    print(f"{YELLOW}[predict] load latest model file: {MODELS_DIR}{MODEL_PATH}{RESET}")
+    mlp, meta = load_npz(os.path.join(MODELS_DIR, MODEL_PATH))
     mean = np.array(meta["mean"], dtype=np.float64)
     std  = np.array(meta["std"],  dtype=np.float64)
     activations = meta["activations"]
@@ -43,7 +61,7 @@ def main():
     proba = mlp.predict_proba(X)
     yhat = proba.argmax(axis=1)
     acc = (yhat == y).mean()
-    print(f"[predict] accuracy={acc:.4f}")
+    print(f"{YELLOW}[predict]{RESET} accuracy={acc:.4f}")
 
 
 if __name__ == "__main__":

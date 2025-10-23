@@ -5,6 +5,7 @@ YELLOW := \033[33m
 GREEN  := \033[32m
 GRAY   := \033[90m
 BLUE   := \033[94m
+PINK   := \033[95m
 
 PY ?= python3
 
@@ -43,15 +44,15 @@ dirs:
 	@mkdir -p $(DATASET_DIR) $(MODEL_DIR) $(OUTPUT_DIR)
 
 split: $(SPLIT_PY) | dirs
-	@printf "$(GREEN)[split]$(RESET) running...\n"
+	@printf "$(PINK)[split]$(RESET) running...\n"
 	$(PY) $(SPLIT_PY)
 
 train: $(TRAIN_PY) | dirs
-	@printf "$(GREEN)[train]$(RESET) running...\n"
+	@printf "$(BLUE)[train]$(RESET) running...\n"
 	$(PY) $(TRAIN_PY)
 
 predict: $(PREDICT_PY) | dirs
-	@printf "$(GREEN)[predict]$(RESET) running...\n"
+	@printf "$(YELLOW)[predict]$(RESET) running...\n"
 	$(PY) $(PREDICT_PY)
 
 clean:
@@ -65,10 +66,9 @@ clean:
 fclean:
 	@printf "$(GREEN)[clean]$(RESET) removing artifacts...\n"
 	@rm -f \
-		$(MODEL_DIR)/saved_model.npz \
+		$(MODEL_DIR)/*.npz \
 		$(MODEL_DIR)/predictions.csv \
-		$(OUTPUT_DIR)/loss.png \
-		$(OUTPUT_DIR)/accuracy.png \
+		$(OUTPUT_DIR)/*.png \
 		$(DATASET_DIR)/data_train.csv \
 		$(DATASET_DIR)/data_valid.csv
 

@@ -4,6 +4,8 @@ import math
 import numpy as np
 import os
 
+RESET  = "\033[0m"
+GREEN  = "\033[32m"
 
 #init
 def he_uniform(shape, rng):
@@ -220,7 +222,7 @@ def train_loop(
 
         if verbose:
             print(f"[{epoch:02d}] loss={loss_tr:.4f} acc={acc_tr:.4f} | val_loss={loss_va:.4f} val_acc={acc_va:.4f}")
-
+            # print(f"dW: {dWs[0][0][0]}, \nsb: {dbs[0][0][0]}\n")
         # early fininshing
         if loss_va < best_val - 1e-8:
             best_val = loss_va
@@ -231,10 +233,11 @@ def train_loop(
             left -= 1
             if left == 0:
                 if verbose:
-                    print(f"[early-stopping] epoch={epoch}, best@{best_epoch} val_loss={best_val:.4f}")
-                # the best W b
+                    print(f"{GREEN}[early-stopping] current epoch={epoch}, best epoch={best_epoch}, val_loss={best_val:.4f}{RESET}")
+                # recover the best W b
                 for (W, b), layer in zip(best_snapshot, mlp.layers):
                     layer.W, layer.b = W, b
+                # print(f"\nthe best W: {layer.W},  B: {layer.b}\n\n")
                 break
 
         # LR decreasing

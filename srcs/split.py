@@ -1,6 +1,9 @@
 import csv
 import numpy as np
 
+RESET  = "\033[0m"
+PINK    = "\033[95m"
+
 INPUT_PATH  = "datasets/data.csv"
 TRAIN_OUT   = "datasets/data_train.csv"
 VALID_OUT   = "datasets/data_valid.csv"
@@ -39,8 +42,8 @@ def main():
     write_csv(TRAIN_OUT, [rows[i] for i in train_idx])
     write_csv(VALID_OUT, [rows[i] for i in valid_idx])
 
-    print(f"[split] train={len(train_idx)}, valid={len(valid_idx)}")
-    print(f"[split] saved -> {TRAIN_OUT}, {VALID_OUT}")
+    print(f"{PINK}[split]{RESET} train={len(train_idx)}, valid={len(valid_idx)}")
+    print(f"{PINK}[split] saved -> {TRAIN_OUT}, {VALID_OUT}{RESET}")
 
 if __name__ == "__main__":
     main()
