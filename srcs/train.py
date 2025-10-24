@@ -30,10 +30,11 @@ def write_latest(models_dir: str, model_filename: str):
     os.makedirs(MODELS_DIR, exist_ok=True)
     latest = os.path.join(MODELS_DIR, "latest")
     with open(latest, "w", encoding="utf-8") as f:
-        f.write(os.path.basename(model_filename).strip() + "\n")  # 파일명만 저장
+        f.write(os.path.basename(model_filename).strip() + "\n")
         f.flush()
         os.fsync(f.fileno())
     print(f"{BLUE}[train]{GRAY} saved latest model -> {MODELS_DIR}latest{RESET}")
+
 
 def one_hot(y, n_classes):
     Y = np.zeros((len(y), n_classes), dtype=np.float64)
@@ -87,8 +88,8 @@ def main():
 
     # define model
     input_size = X_tr.shape[1]
-    layer_sizes = [input_size] + LAYERS + [2]     # [30, 32, 32, 2]
-    activations = [ACT] * len(LAYERS) + ["softmax"]
+    layer_sizes = [input_size] + LAYERS + [2]           # [30, 32, 32, 2]
+    activations = [ACT] * len(LAYERS) + ["softmax"]     # relu, relu, softmax
 
     # create model (init SEED = shuffle SEED)
     mlp = MLP(layer_sizes, activations, seed=SEED)
@@ -117,7 +118,7 @@ def main():
     arch_all = "-".join(str(s) for s in layer_sizes)
 
     # output_size = 2
-    # arch_model = "-".join(str(s) for s in (LAYERS + [output_size]))  # e.g. "64-32-2"
+    # arch_model = "-".join(str(s) for s in (LAYERS + [output_size]))
 
     best_val_loss = min(hist["val_loss"]) if isinstance(hist, dict) else min(h["val_loss"] for h in hist)
     MODEL_OUT = f"model_e{best_epoch}-of-{EPOCHS}_vl{best_val_loss:.4f}_b{BATCH}_seed{SEED}_arch{arch_all}.npz"

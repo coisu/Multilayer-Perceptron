@@ -8,16 +8,16 @@ RESET  = "\033[0m"
 GREEN  = "\033[32m"
 
 #init
-def he_uniform(shape, rng):
+def he_uniform(shape, rn_gen):
     fan_in = shape[0]
     limit = math.sqrt(6.0 / max(1, fan_in))
-    return rng.uniform(-limit, limit, size=shape)
+    return rn_gen.uniform(-limit, limit, size=shape)
 
 
-def xavier_uniform(shape, rng):
+def xavier_uniform(shape, rn_gen):
     fan_in, fan_out = shape[0], shape[1]
     limit = math.sqrt(6.0 / max(1, fan_in + fan_out))
-    return rng.uniform(-limit, limit, size=shape)
+    return rn_gen.uniform(-limit, limit, size=shape)
 
 
 def relu(x): 
@@ -64,23 +64,22 @@ class Layer:
 
 class MLP:
     def __init__(self, layer_sizes: List[int], activations: List[str], seed: int = 42):
-        """
-        layer_sizes: [D_in, H1, ..., D_out]
-        activations: ["relu", ..., "softmax"]  (softmax for the last)
-        """
+        # layer_sizes: [input, hl1, hl2, out]
+        # activations: ["relu", "relu" "softmax"]
         assert len(layer_sizes) >= 2
         assert len(activations) == len(layer_sizes) - 1
         self.layer_sizes = layer_sizes
         self.activations = activations
         self.seed = int(seed)
-        rng = np.random.default_rng(self.seed)
+        rn_gen = np.random.default_rng(self.seed)
 
         self.layers: List[Layer] = []
+        # [30, 64, relu], [64, 32, relu], [32, 2, softmax]
         for in_size, out_size, act in zip(layer_sizes[:-1], layer_sizes[1:], activations):
             if act == "relu":
-                W = he_uniform((in_size, out_size), rng)
+                W = he_uniform((in_size, out_size), rn_gen)
             else:
-                W = xavier_uniform((in_size, out_size), rng)
+                W = xavier_uniform((in_size, out_size), rn_gen)
             b = np.zeros((1, out_size), dtype=W.dtype)
             self.layers.append(Layer(W=W.astype(np.float64), b=b.astype(np.float64), activation=act))
 
@@ -176,7 +175,7 @@ def train_loop(
                     stop and recover the best check point
                     when runout of patience
     """
-    rng = np.random.default_rng(int(seed))
+    rn_gen = np.random.default_rng(int(seed))
     N = X_tr.shape[0]
     hist = {"loss": [], "val_loss": [], "acc": [], "val_acc": []}
 
@@ -189,7 +188,7 @@ def train_loop(
 
     for epoch in range(1, epochs + 1):
         # shuffle EPOCH
-        idx = rng.permutation(N)
+        idx = rn_gen.permutation(N)
         X_tr = X_tr[idx]; Y_tr = Y_tr[idx]
 
         # mini BATCH training
