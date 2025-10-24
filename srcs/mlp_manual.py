@@ -31,6 +31,7 @@ def relu_grad_from_z(z):
 
 def softmax_stable(z):
     z = z - z.max(axis=1, keepdims=True)
+    # exponential e^x with Euler’s number
     expz = np.exp(z)
     return expz / expz.sum(axis=1, keepdims=True)
 
@@ -78,23 +79,29 @@ class MLP:
         for in_size, out_size, act in zip(layer_sizes[:-1], layer_sizes[1:], activations):
             if act == "relu":
                 W = he_uniform((in_size, out_size), rn_gen)
-            else:
+            else:   # smaller
                 W = xavier_uniform((in_size, out_size), rn_gen)
+            # bias starts from 0
             b = np.zeros((1, out_size), dtype=W.dtype)
             self.layers.append(Layer(W=W.astype(np.float64), b=b.astype(np.float64), activation=act))
 
     # forward for backward
     def forward(self, X) -> Tuple[List[np.ndarray], List[np.ndarray]]:
         a = X.astype(np.float64)
-        activs = [a]       # A0 = input
-        zs = []            # z of each layer
+        activs = [a]       # A0 = input (114, 30), A1=(114, 64), A2=(114, 32), A3=(114, 2)
+        print(f"input a: {a}\n")
+        zs = []            # z of each layer, z = a*W + b
         for layer in self.layers:
             a, z = layer.forward(a)
             activs.append(a)
-            zs.append(z)
+            # print(f"a: {a}\n")
+            zs.append(z)    # z0(114, 64), z1(114, 32), z2(114, 2)
         return activs, zs
 
     def predict_proba(self, X):
+        print("type(X) =", type(X))
+        print("is ndarray? ->", isinstance(X, np.ndarray))
+        print("shape =", X.shape, "ndim =", X.ndim, "dtype =", X.dtype)
         a, _ = self.forward(X)
         return a[-1]
 
