@@ -48,7 +48,7 @@ def standardize_transform(X, mean, std):
 
 def main():
     MODEL_PATH = read_latest_model_path(LATEST_PATH)
-    print(f"{YELLOW}[predict] load latest model file: {MODELS_DIR}{MODEL_PATH}{RESET}")
+    print(f"{YELLOW}[predict] {RESET}load latest model file: {MODELS_DIR}{MODEL_PATH}{RESET}")
     mlp, meta = load_npz(os.path.join(MODELS_DIR, MODEL_PATH))
     mean = np.array(meta["mean"], dtype=np.float64)
     std  = np.array(meta["std"],  dtype=np.float64)
