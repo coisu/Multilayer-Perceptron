@@ -2,7 +2,8 @@
 import os, csv
 import numpy as np
 from split import N_COLS
-from mlp_manual import load_npz
+from mlp_manual import load_npz, cross_entropy
+from train import one_hot
 
 
 RESET  = "\033[0m"
@@ -61,8 +62,11 @@ def main():
     proba = mlp.predict_proba(X)
     yhat = proba.argmax(axis=1)
     acc = (yhat == y).mean()
-    print(f"{YELLOW}[predict]{RESET} accuracy={acc:.4f}")
 
+    Y = one_hot(y, n_classes=2)
+    binary_cross_entropy = cross_entropy(proba, Y)
+
+    print(f"{YELLOW}[predict]{RESET} accuracy={acc:.4f}, binary_cross_entropy={binary_cross_entropy:.4f}")
 
 if __name__ == "__main__":
     main()

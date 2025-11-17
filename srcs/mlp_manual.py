@@ -89,7 +89,7 @@ class MLP:
     def forward(self, X) -> Tuple[List[np.ndarray], List[np.ndarray]]:
         a = X.astype(np.float64)
         activs = [a]       # A0 = input (114, 30), A1=(114, 64), A2=(114, 32), A3=(114, 2)
-        print(f"input a: {a}\n")
+        # print(f"input a: {a}\n")
         zs = []            # z of each layer, z = a*W + b
         for layer in self.layers:
             a, z = layer.forward(a)
@@ -99,8 +99,8 @@ class MLP:
         return activs, zs
 
     def predict_proba(self, X):
-        print("type(X) =", type(X))
-        print("is ndarray? ->", isinstance(X, np.ndarray))
+        # print("type(X) =", type(X))
+        # print("is ndarray? ->", isinstance(X, np.ndarray))
         print("shape =", X.shape, "ndim =", X.ndim, "dtype =", X.dtype)
         a, _ = self.forward(X)
         return a[-1]
