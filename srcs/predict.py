@@ -66,7 +66,7 @@ def main():
     Y = one_hot(y, n_classes=2)
     binary_cross_entropy = cross_entropy(proba, Y)
 
-    print(f"{YELLOW}[predict]{RESET} accuracy={acc:.4f}, binary_cross_entropy={binary_cross_entropy:.4f}")
+    print(f"{YELLOW}[predict] accuracy={acc:.4f}, binary_cross_entropy={binary_cross_entropy:.4f}{RESET}")
 
 if __name__ == "__main__":
     main()
