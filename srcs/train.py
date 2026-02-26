@@ -37,7 +37,7 @@ def write_latest(models_dir: str, model_filename: str):
 
 
 def one_hot(y, n_classes):
-    Y = np.zeros((len(y), n_classes), dtype=np.float64)
+    Y = np.zeros((len(y), n_classes), dtype=np.float64) # align witj softmax
     Y[np.arange(len(y)), y] = 1.0
     return Y
 
@@ -54,7 +54,8 @@ def read_dataset(path):
             # col0=id, col1=diagnosis(M/B), col2..31=30 features
             y = 1 if row[1].strip() == "M" else 0
             feats = [float(v) for v in row[2:]]
-            y_list.append(y); X_list.append(feats)
+            y_list.append(y)
+            X_list.append(feats)
 
     X = np.array(X_list, dtype=np.float64)
     y = np.array(y_list, dtype=np.int64)
@@ -67,7 +68,7 @@ def standardize_fit(X):
     return mean, std
 
 
-def standardize_transform(X, mean, std):
+def standardize_transform(X, mean, std): #np
     return (X - mean) / std
 
 
@@ -76,26 +77,27 @@ def main():
     X_tr, y_tr = read_dataset(TRAIN_SET)
     X_va, y_va = read_dataset(VALID_SET)
     print(f"X_tr: {X_tr.shape}, X_va: {X_va.shape}")
-
-    # standardize
-    mean_tr, std_tr = standardize_fit(X_tr)
-    X_tr = standardize_transform(X_tr, mean_tr, std_tr)
-    X_va = standardize_transform(X_va, mean_tr, std_tr)
+    print(f"y_tr: {y_tr.shape}")
 
     # one-hot
     Y_tr = one_hot(y_tr, 2)
     Y_va = one_hot(y_va, 2)
+    print(f"Y_tr: {Y_tr.shape}")
+    # standardize
+    mean_tr, std_tr = standardize_fit(X_tr)             # avoiding data leakage, to not use validation data
+    X_tr = standardize_transform(X_tr, mean_tr, std_tr)
+    X_va = standardize_transform(X_va, mean_tr, std_tr)
 
     # define model
     input_size = X_tr.shape[1]
-    layer_sizes = [input_size] + LAYERS + [2]           # [30, 32, 32, 2]
+    layer_sizes = [input_size] + LAYERS + [2]           # [30, 64, 32, 2]
     activations = [ACT] * len(LAYERS) + ["softmax"]     # relu, relu, softmax
 
     # create model (init SEED = shuffle SEED)
     mlp = MLP(layer_sizes, activations, seed=SEED)
 
     # train
-    hist, best_epoch = train_loop(
+    history, best_epoch = train_loop(
         mlp,
         X_tr, Y_tr, X_va, Y_va,
         epochs=EPOCHS, lr=LR, batch_size=BATCH,
@@ -120,7 +122,7 @@ def main():
     # output_size = 2
     # arch_model = "-".join(str(s) for s in (LAYERS + [output_size]))
 
-    best_val_loss = min(hist["val_loss"]) if isinstance(hist, dict) else min(h["val_loss"] for h in hist)
+    best_val_loss = min(history["val_loss"]) if isinstance(history, dict) else min(h["val_loss"] for h in history)
     MODEL_OUT = f"model_e{best_epoch}-of-{EPOCHS}_vl{best_val_loss:.4f}_b{BATCH}_seed{SEED}_arch{arch_all}.npz"
 
     os.makedirs(MODELS_DIR, exist_ok=True)
@@ -131,8 +133,8 @@ def main():
     # graph
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     plt.figure()
-    plt.plot(hist["loss"], label="loss")
-    plt.plot(hist["val_loss"], label="val_loss")
+    plt.plot(history["loss"], label="loss")
+    plt.plot(history["val_loss"], label="val_loss")
 
     plt.legend()
 
@@ -144,8 +146,8 @@ def main():
     plt.savefig(os.path.join(OUTPUT_DIR, "loss.png"))
 
     plt.figure()
-    plt.plot(hist["acc"], label="acc")
-    plt.plot(hist["val_acc"], label="val_acc")
+    plt.plot(history["acc"], label="acc")
+    plt.plot(history["val_acc"], label="val_acc")
 
     plt.legend()
     

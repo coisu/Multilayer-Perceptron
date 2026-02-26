@@ -7,7 +7,13 @@ import os
 RESET  = "\033[0m"
 GREEN  = "\033[32m"
 
-#init
+# init W with random val
+# Xavier limit < He limit
+# less smaller, less biggger
+# relu: cut off negative value to 0
+# too much 0 = less meanigful val, also doubled 0 when it through backward
+# He: uses slightly larger initial weights
+# so the signal doesn’t fade too much as it passes through multiple layers.
 def he_uniform(shape, rn_gen):
     fan_in = shape[0]
     limit = math.sqrt(6.0 / max(1, fan_in))
@@ -30,13 +36,16 @@ def relu_grad_from_z(z):
 
 
 def softmax_stable(z):
-    z = z - z.max(axis=1, keepdims=True)
+    z = z - z.max(axis=1, keepdims=True)  # [1000, 1001] -> [-1, 0]
     # exponential e^x with Euler’s number
+    # bigger values becom bigger, smaller get smaller
     expz = np.exp(z)
-    return expz / expz.sum(axis=1, keepdims=True)
+    return expz / expz.sum(axis=1, keepdims=True)  # keepdims: shape: (2, ) -> (2, 1)
 
 
-def cross_entropy(pred, Y, eps: float = 1e-12):
+def cross_entropy(pred, Y):
+    # Σ for class: sum(..., axis=1)
+    eps = 1e-12  # to prevent log(0)
     pred = np.clip(pred, eps, 1.0)
     return -np.mean(np.sum(Y * np.log(pred), axis=1))
 

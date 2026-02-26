@@ -34,7 +34,6 @@ def main():
     n_rows = len(rows)
     idx = np.arange(n_rows)
     rng = np.random.default_rng(SEED)
-    print("rng: ", rng)
     rng.shuffle(idx)
 
     split = int(n_rows * (1 - VALID_RATIO))

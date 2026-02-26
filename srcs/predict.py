@@ -35,7 +35,8 @@ def read_dataset(path):
             assert len(row) == N_COLS, f"Expected {N_COLS}, got {len(row)}"
             y = 1 if row[1].strip() == "M" else 0
             feats = [float(v) for v in row[2:]]
-            y_list.append(y); X_list.append(feats)
+            y_list.append(y)
+            X_list.append(feats)
 
     X = np.array(X_list, dtype=np.float64)
     y = np.array(y_list, dtype=np.int64)
@@ -44,6 +45,14 @@ def read_dataset(path):
 
 def standardize_transform(X, mean, std):
     return (X - mean) / std
+
+def binary_cross_entropy(y_true: np.ndarray, p_true: np.ndarray) -> float:
+    # E = -(1/N) * sum( y*log(p) + (1-y)*log(1-p) )
+    # Σ no needs np.sum(..., axis=1)
+    eps = 1e-12
+    y = y_true.astype(np.float64)
+    p = np.clip(p_true.astype(np.float64), eps, 1.0 - eps)  # 1.0 - eps: for log(1.0 - p)
+    return float(-np.mean(y * np.log(p) + (1.0 - y) * np.log(1.0 - p)))
 
 
 def main():
@@ -63,10 +72,11 @@ def main():
     yhat = proba.argmax(axis=1)
     acc = (yhat == y).mean()
 
-    Y = one_hot(y, n_classes=2)
-    binary_cross_entropy = cross_entropy(proba, Y)
+    # strict BCE evaluation (use p for class 1)
+    p_pos = proba[:, 1]                  # shape (N,)
+    bce = binary_cross_entropy(y, p_pos)
 
-    print(f"{YELLOW}[predict] accuracy={acc:.4f}, binary_cross_entropy={binary_cross_entropy:.4f}{RESET}")
+    print(f"{YELLOW}[predict] accuracy={acc:.4f}, binary_cross_entropy={bce:.4f}{RESET}")
 
 if __name__ == "__main__":
     main()
