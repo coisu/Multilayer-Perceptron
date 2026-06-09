@@ -1,5 +1,6 @@
 # load saved npz(weights + meta), excute forward and valify accurancy
 import os, csv
+import argparse
 import numpy as np
 from split import N_COLS
 from mlp_manual import load_npz, cross_entropy
@@ -9,10 +10,21 @@ from train import one_hot
 RESET  = "\033[0m"
 YELLOW = "\033[33m"
 
+# defaults (used when no CLI argument is given)
 # MODEL_PATH = "models/saved_model.npz"
 MODELS_DIR = "models/"
 LATEST_PATH = "models/latest"
 INPUT_CSV  = "datasets/data_valid.csv"
+
+
+def parse_args():
+    # current constants are the defaults; pass args to override
+    p = argparse.ArgumentParser(description="Load a saved model and evaluate it (accuracy + BCE)")
+    p.add_argument("--input",      default=INPUT_CSV,   help=f"csv to predict on (default: {INPUT_CSV})")
+    p.add_argument("--model",      default=None,        help="model .npz filename inside models_dir (default: read from latest)")
+    p.add_argument("--models_dir", default=MODELS_DIR,  help=f"model dir (default: {MODELS_DIR})")
+    p.add_argument("--latest",     default=LATEST_PATH, help=f"latest pointer file (default: {LATEST_PATH})")
+    return p.parse_args()
 
 
 def read_latest_model_path(latest_file="models/latest") -> str:
@@ -55,16 +67,19 @@ def binary_cross_entropy(y_true: np.ndarray, p_true: np.ndarray) -> float:
     return float(-np.mean(y * np.log(p) + (1.0 - y) * np.log(1.0 - p)))
 
 
-def main():
-    MODEL_PATH = read_latest_model_path(LATEST_PATH)
-    print(f"{YELLOW}[predict] {RESET}load latest model file: {MODELS_DIR}{MODEL_PATH}{RESET}")
-    mlp, meta = load_npz(os.path.join(MODELS_DIR, MODEL_PATH))
+def main(args=None):
+    if args is None:
+        args = parse_args()
+
+    MODEL_PATH = args.model if args.model else read_latest_model_path(args.latest)
+    print(f"{YELLOW}[predict] {RESET}load model file: {os.path.join(args.models_dir, MODEL_PATH)}{RESET}")
+    mlp, meta = load_npz(os.path.join(args.models_dir, MODEL_PATH))
     mean = np.array(meta["mean"], dtype=np.float64)
     std  = np.array(meta["std"],  dtype=np.float64)
     activations = meta["activations"]
 
     # 2) data load + preprocessing in the samw way
-    X, y = read_dataset(INPUT_CSV)
+    X, y = read_dataset(args.input)
     X = standardize_transform(X, mean, std)
 
     # 3) predict
