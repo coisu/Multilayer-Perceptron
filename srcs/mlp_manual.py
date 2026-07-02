@@ -98,19 +98,14 @@ class MLP:
     def forward(self, X) -> Tuple[List[np.ndarray], List[np.ndarray]]:
         a = X.astype(np.float64)
         activs = [a]       # A0 = input (114, 30), A1=(114, 64), A2=(114, 32), A3=(114, 2)
-        # print(f"input a: {a}\n")
         zs = []            # z of each layer, z = a*W + b
         for layer in self.layers:
             a, z = layer.forward(a)
             activs.append(a)
-            # print(f"a: {a}\n")
             zs.append(z)    # z0(114, 64), z1(114, 32), z2(114, 2)
         return activs, zs
 
     def predict_proba(self, X):
-        # print("type(X) =", type(X))
-        # print("is ndarray? ->", isinstance(X, np.ndarray))
-        print("shape =", X.shape, "ndim =", X.ndim, "dtype =", X.dtype)
         a, _ = self.forward(X)
         return a[-1]
 
@@ -237,7 +232,6 @@ def train_loop(
 
         if verbose:
             print(f"[{epoch:02d}] loss={loss_tr:.4f} acc={acc_tr:.4f} | val_loss={loss_va:.4f} val_acc={acc_va:.4f}")
-            # print(f"dW: {dWs[0][0][0]}, \nsb: {dbs[0][0][0]}\n")
         # early fininshing
         if loss_va < best_val - 1e-8:
             best_val = loss_va
@@ -252,7 +246,6 @@ def train_loop(
                 # recover the best W b
                 for (W, b), layer in zip(best_snapshot, mlp.layers):
                     layer.W, layer.b = W, b
-                # print(f"\nthe best W: {layer.W},  B: {layer.b}\n\n")
                 break
 
         # LR decreasing

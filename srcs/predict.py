@@ -3,8 +3,7 @@ import os, csv
 import argparse
 import numpy as np
 from split import N_COLS
-from mlp_manual import load_npz, cross_entropy
-from train import one_hot
+from mlp_manual import load_npz
 
 
 RESET  = "\033[0m"
@@ -91,7 +90,15 @@ def main(args=None):
     p_pos = proba[:, 1]                  # shape (N,)
     bce = binary_cross_entropy(y, p_pos)
 
-    print(f"{YELLOW}[predict] accuracy={acc:.4f}, binary_cross_entropy={bce:.4f}{RESET}")
+    pred_path = os.path.join(args.models_dir, "predictions.csv")
+    os.makedirs(args.models_dir, exist_ok=True)
+    with open(pred_path, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["index", "true", "pred", "proba_malignant"])
+        for i in range(len(y)):
+            w.writerow([i, int(y[i]), int(yhat[i]), f"{p_pos[i]:.6f}"])
+    print(f"{YELLOW}[predict] saved predictions -> {pred_path}{RESET}")
+
 
 if __name__ == "__main__":
     main()
