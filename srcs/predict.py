@@ -5,9 +5,8 @@ import numpy as np
 from split import N_COLS
 from mlp_manual import load_npz
 
-
-RESET  = "\033[0m"
-YELLOW = "\033[33m"
+RESET = "\033[0m"
+GREEN = "\033[32m"
 
 # defaults (used when no CLI argument is given)
 # MODEL_PATH = "models/saved_model.npz"
@@ -71,14 +70,16 @@ def main(args=None):
         args = parse_args()
 
     MODEL_PATH = args.model if args.model else read_latest_model_path(args.latest)
-    print(f"{YELLOW}[predict] {RESET}load model file: {os.path.join(args.models_dir, MODEL_PATH)}{RESET}")
-    mlp, meta = load_npz(os.path.join(args.models_dir, MODEL_PATH))
+    model_path = os.path.join(args.models_dir, MODEL_PATH)
+    print(f"> loading model '{model_path}'...")
+    mlp, meta = load_npz(model_path)
     mean = np.array(meta["mean"], dtype=np.float64)
     std  = np.array(meta["std"],  dtype=np.float64)
     activations = meta["activations"]
 
     # 2) data load + preprocessing in the samw way
     X, y = read_dataset(args.input)
+    print(f"x_predict shape : {X.shape}")
     X = standardize_transform(X, mean, std)
 
     # 3) predict
@@ -90,6 +91,8 @@ def main(args=None):
     p_pos = proba[:, 1]                  # shape (N,)
     bce = binary_cross_entropy(y, p_pos)
 
+    print(f"{GREEN}> accuracy: {acc:.4f} - binary cross-entropy: {bce:.4f}{RESET}")
+
     pred_path = os.path.join(args.models_dir, "predictions.csv")
     os.makedirs(args.models_dir, exist_ok=True)
     with open(pred_path, "w", newline="", encoding="utf-8") as f:
@@ -97,7 +100,7 @@ def main(args=None):
         w.writerow(["index", "true", "pred", "proba_malignant"])
         for i in range(len(y)):
             w.writerow([i, int(y[i]), int(yhat[i]), f"{p_pos[i]:.6f}"])
-    print(f"{YELLOW}[predict] saved predictions -> {pred_path}{RESET}")
+    print(f"> saved predictions '{pred_path}' to disk...")
 
 
 if __name__ == "__main__":

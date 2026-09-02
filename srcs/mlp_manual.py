@@ -4,8 +4,8 @@ import math
 import numpy as np
 import os
 
-RESET  = "\033[0m"
-GREEN  = "\033[32m"
+RESET = "\033[0m"
+GREEN = "\033[32m"
 
 # init W with random val
 # Xavier limit < He limit
@@ -231,7 +231,10 @@ def train_loop(
         hist["val_acc"].append(acc_va)
 
         if verbose:
-            print(f"[{epoch:02d}] loss={loss_tr:.4f} acc={acc_tr:.4f} | val_loss={loss_va:.4f} val_acc={acc_va:.4f}")
+            print(
+                f"epoch {epoch:02d}/{epochs} - loss: {loss_tr:.4f} - val_loss: {loss_va:.4f} "
+                f"- acc: {acc_tr:.4f} - val_acc: {acc_va:.4f}"
+            )
         # early fininshing
         if loss_va < best_val - 1e-8:
             best_val = loss_va
@@ -242,7 +245,7 @@ def train_loop(
             left -= 1
             if left == 0:
                 if verbose:
-                    print(f"{GREEN}[early-stopping] current epoch={epoch}, best epoch={best_epoch}, val_loss={best_val:.4f}{RESET}")
+                    print(f"{GREEN}> early stopping at epoch {epoch:02d}/{epochs} (best epoch: {best_epoch:02d}, val_loss: {best_val:.4f}){RESET}")
                 # recover the best W b
                 for (W, b), layer in zip(best_snapshot, mlp.layers):
                     layer.W, layer.b = W, b
@@ -252,7 +255,7 @@ def train_loop(
         if lr_decay_at and epoch == lr_decay_at:
             lr_curr *= float(lr_decay_factor)
             if verbose:
-                print(f"[lr-decay] lr -> {lr_curr}")
+                print(f"> learning rate decay at epoch {epoch:02d}: {lr_curr / lr_decay_factor:.4f} -> {lr_curr:.4f}")
 
     return hist, (best_epoch if best_epoch != -1 else epoch)
 

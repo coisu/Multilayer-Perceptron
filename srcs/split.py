@@ -2,9 +2,6 @@ import csv
 import argparse
 import numpy as np
 
-RESET  = "\033[0m"
-PINK    = "\033[95m"
-
 # defaults (used when no CLI argument is given)
 INPUT_PATH  = "datasets/data.csv"
 TRAIN_OUT   = "datasets/data_train.csv"
@@ -57,8 +54,9 @@ def main(args=None):
     write_csv(args.train_out, [rows[i] for i in train_idx])
     write_csv(args.valid_out, [rows[i] for i in valid_idx])
 
-    print(f"{PINK}[split]{RESET} train={len(train_idx)}, valid={len(valid_idx)}")
-    print(f"{PINK}[split] saved -> {args.train_out}, {args.valid_out}{RESET}")
+    print(f"train shape : ({len(train_idx)}, {N_COLS - 2})")
+    print(f"valid shape : ({len(valid_idx)}, {N_COLS - 2})")
+    print(f"> saved '{args.train_out}' and '{args.valid_out}' to disk...")
 
 if __name__ == "__main__":
     main()

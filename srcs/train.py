@@ -5,10 +5,6 @@ import matplotlib.pyplot as plt
 from split import SEED, N_COLS
 from mlp_manual import MLP, train_loop, save_npz
 
-RESET  = "\033[0m"
-GRAY   = "\033[90m"
-BLUE   = "\033[94m"
-
 # defaults (used when no CLI argument is given)
 TRAIN_SET   = "datasets/data_train.csv"
 VALID_SET   = "datasets/data_valid.csv"
@@ -63,7 +59,7 @@ def write_latest(models_dir: str, model_filename: str):
         f.write(os.path.basename(model_filename).strip() + "\n")
         f.flush()
         os.fsync(f.fileno())
-    print(f"{BLUE}[train]{GRAY} saved latest model -> {os.path.join(models_dir, 'latest')}{RESET}")
+    print(f"> saved latest pointer to disk: '{os.path.join(models_dir, 'latest')}'")
 
 
 def one_hot(y, n_classes):
@@ -109,13 +105,12 @@ def main(args=None):
     # load data
     X_tr, y_tr = read_dataset(args.train_set)
     X_va, y_va = read_dataset(args.valid_set)
-    print(f"X_tr: {X_tr.shape}, X_va: {X_va.shape}")
-    print(f"y_tr: {y_tr.shape}")
+    print(f"x_train shape : {X_tr.shape}")
+    print(f"x_valid shape : {X_va.shape}")
 
     # one-hot
     Y_tr = one_hot(y_tr, 2)
     Y_va = one_hot(y_va, 2)
-    print(f"Y_tr: {Y_tr.shape}")
     # standardize
     mean_tr, std_tr = standardize_fit(X_tr)             # avoiding data leakage, to not use validation data
     X_tr = standardize_transform(X_tr, mean_tr, std_tr)
@@ -159,8 +154,9 @@ def main(args=None):
     MODEL_OUT = f"model_e{best_epoch}-of-{args.epochs}_vl{best_val_loss:.4f}_b{args.batch_size}_seed{args.seed}_arch{arch_all}.npz"
 
     os.makedirs(args.models_dir, exist_ok=True)
-    save_npz(os.path.join(args.models_dir, MODEL_OUT), mlp, meta)
-    print(f"{BLUE}[train] saved model -> {os.path.join(args.models_dir, MODEL_OUT)}{RESET}")
+    model_path = os.path.join(args.models_dir, MODEL_OUT)
+    save_npz(model_path, mlp, meta)
+    print(f"> saving model '{model_path}' to disk...")
     write_latest(args.models_dir, MODEL_OUT)
 
     # graph
@@ -192,7 +188,7 @@ def main(args=None):
 
     plt.savefig(os.path.join(OUTPUT_DIR, "accuracy.png"))
 
-    print(f"{BLUE}[train]{RESET} plots -> {os.path.join(OUTPUT_DIR,'loss.png')}, {os.path.join(OUTPUT_DIR,'accuracy.png')}")
+    print(f"> saved learning curves '{os.path.join(OUTPUT_DIR, 'loss.png')}' and '{os.path.join(OUTPUT_DIR, 'accuracy.png')}' to disk...")
 
 if __name__ == "__main__":
     main()
