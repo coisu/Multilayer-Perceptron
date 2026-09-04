@@ -118,11 +118,14 @@ def backward(mlp: MLP, activs: List[np.ndarray], zs: List[np.ndarray], Y_batch: 
     return: dWs, dbs
     """
     L = len(mlp.layers)
-    B = Y_batch.shape[0]
+    B = Y_batch.shape[0]    # batch size
 
     # output layer
     pred = activs[-1]              # A_L
     delta = (pred - Y_batch) / B   # mean BATCH
+                                    # delta = (pred - Y_batch) / B
+                                    #   = ([0.650, 0.350] - [0, 1]) / 1
+                                    #   = [0.650, -0.650]
 
     dWs = [None] * L
     dbs = [None] * L
