@@ -167,7 +167,7 @@ def sgd_step_(mlp: MLP, dWs, dbs, lr: float, weight_decay: float = 0.0):
     # SGD + L2(weight decay)
     for layer, dW, db in zip(mlp.layers, dWs, dbs):
         if weight_decay and weight_decay > 0.0:
-            layer.W -= lr * (dW + weight_decay * layer.W)
+            layer.W -= lr * (dW + weight_decay * layer.W)   # bigger w, pulling closer to 0
         else:
             layer.W -= lr * dW
         layer.b -= lr * db
